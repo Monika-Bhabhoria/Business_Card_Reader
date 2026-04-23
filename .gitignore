@@ -1,0 +1,8 @@
+card*
+.streamlit/secrets.toml
+venv/
+main.py
+2104.py
+2304.py
+.ipynb_checkpoints/
+*.ipynb
