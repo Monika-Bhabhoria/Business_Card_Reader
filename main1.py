@@ -7,7 +7,7 @@ from PIL import Image
 # Cache the OCR model (important: avoids reloading every time)
 @st.cache_resource
 def load_reader():
-    return easyocr.Reader(['en'], gpu=False)
+    return easyocr.Reader(['en'], gpu=True)
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
