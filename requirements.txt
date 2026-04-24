@@ -1,7 +1,7 @@
-opencv-python-headless == 4.5.4.60
-streamlit ==  1.50.0
-pillow == 9.5.0
-langchain_groq == 0.3.8
-langchain_core ==0.3.84
-pydantic ==2.13.3
-pytesseract == 0.3.13
+streamlit==1.50.0
+opencv-python-headless>=4.8.0
+pillow>=10.0.0
+pytesseract==0.3.13
+langchain_groq==0.3.8
+langchain_core>=0.3.80
+pydantic>=2.7
