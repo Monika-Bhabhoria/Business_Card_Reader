@@ -17,6 +17,38 @@ import os
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 
+import pandas as pd
+import os
+
+FILE_PATH = "cards_data.csv"
+COLUMNS = ["name","designation",
+                "organisation",
+                "phone1",
+                "phone2",
+                "phone3",
+                "email1",
+                "email2",
+                "email3",
+                "address",
+                "Website"]
+def save_to_file(data):
+    new_df = pd.DataFrame([data])
+
+    # Ensure column order
+    new_df = new_df.reindex(columns=COLUMNS)
+
+    if os.path.exists(FILE_PATH):
+        existing_df = pd.read_csv(FILE_PATH)
+
+        # Align columns if structure changed
+        existing_df = existing_df.reindex(columns=COLUMNS)
+
+        updated_df = pd.concat([existing_df, new_df], ignore_index=True)
+    else:
+        updated_df = new_df
+
+    updated_df.to_csv(FILE_PATH, index=False)
+
 class Employee(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
@@ -111,6 +143,8 @@ if uploaded_file is not None:
     # Convert Pydantic object → dict
     data = res.dict() if res else {}
 
+
+
     # Initialize session state (so edits persist)
     if "form_data" not in st.session_state:
         st.session_state.form_data = data
@@ -133,12 +167,13 @@ if uploaded_file is not None:
             email3 = st.text_input("Email 3", st.session_state.form_data.get("email3", ""))
 
             address = st.text_area("Address", st.session_state.form_data.get("address", ""))
+            Website = st.text_area("Website", st.session_state.form_data.get("Website", ""))
 
         submitted = st.form_submit_button("💾 Save")
 
         if submitted:
             # Update session state
-            st.session_state.form_data = {
+            final_data = {
                 "name": name,
                 "designation": designation,
                 "organisation": organisation,
@@ -148,10 +183,16 @@ if uploaded_file is not None:
                 "email1": email1,
                 "email2": email2,
                 "email3": email3,
-                "address": address
+                "address": address,
+                "Website": Website
             }
+            try:
+                save_to_file(final_data)
+                st.success("Data Saved successfully!")
+            except Exception as e:
+                st.success("Failed to save data")
 
-            st.success("Saved successfully!")
+            
 
             st.subheader("✅ Final Output")
-            st.json(st.session_state.form_data)
+            st.json(final_data)
