@@ -1,13 +1,14 @@
 import streamlit as st
 import cv2
-import easyocr
+#import easyocr
 import numpy as np
 from PIL import Image
+import pytesseract
 
 # Cache the OCR model (important: avoids reloading every time)
-@st.cache_resource
-def load_reader():
-    return easyocr.Reader(['en'], gpu=True)
+# @st.cache_resource
+# def load_reader():
+#     return easyocr.Reader(['en'], gpu=True)
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
@@ -31,13 +32,15 @@ class Employee(BaseModel):
 
     address: Optional[str] = None
 
+    Website: Optional[str] = None
+
 
 os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     temperature=0
 )
-reader = load_reader()
+# reader = load_reader()
 
 st.title("📇 Business Card OCR")
 
@@ -52,50 +55,57 @@ if uploaded_file is not None:
     st.image(img, channels="BGR")
 
     # OCR
-    results = reader.readtext(img)
+    # results = reader.readtext(img)
 
-    threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.3)
 
-    annotated = img.copy()
+    # threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.3)
 
-    extracted_text = []
+    # annotated = img.copy()
 
-    for (bbox, text, score) in results:
-        if score > threshold:
-            extracted_text.append(text)
+    # extracted_text = []
 
-            # Convert bbox to int
-            pts = np.array(bbox).astype(int)
+    # for (bbox, text, score) in results:
+    #     if score > threshold:
+    #         extracted_text.append(text)
 
-            # Draw bounding box
-            cv2.polylines(annotated, [pts], isClosed=True, color=(0,255,0), thickness=2)
+    #         # Convert bbox to int
+    #         pts = np.array(bbox).astype(int)
 
-            # Put text
-            cv2.putText(
-                annotated,
-                text,
-                (pts[0][0], pts[0][1] - 5),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (255, 0, 0),
-                2
-            )
+    #         # Draw bounding box
+    #         cv2.polylines(annotated, [pts], isClosed=True, color=(0,255,0), thickness=2)
 
-    st.subheader("Annotated Image")
-    st.image(annotated, channels="BGR")
+    #         # Put text
+    #         cv2.putText(
+    #             annotated,
+    #             text,
+    #             (pts[0][0], pts[0][1] - 5),
+    #             cv2.FONT_HERSHEY_SIMPLEX,
+    #             0.6,
+    #             (255, 0, 0),
+    #             2
+    #         )
 
-    st.subheader("Extracted Text")
-    joined_text = "\n".join(extracted_text)
-    st.write(joined_text)
+    # st.subheader("Annotated Image")
+    # st.image(annotated, channels="BGR")
+
+    # st.subheader("Extracted Text")
+    # joined_text = "\n".join(extracted_text)
+    # st.write(joined_text)
+
+
+    text1 = pytesseract.image_to_string(img)
+
+    st.subheader("Extracted Text tesseract")
+    st.write(text1)
     def extract_fields(text):
         prompt=f"""You are a helpful business card reader.
-        Your job is to classify the content from business card into fields like Employee_Name, organisation_name, phone_number, Adress.
+        Your job is to classify the content from business card into fields like Employee_Name, organisation_name, phone_number, Adress, website.
         If a value is not available, set it to none. DO NOT ASSUME values, ONLY USE information from given input.
         INPUT: {text}"""
         structured_llm = llm.with_structured_output(Employee)
         response = structured_llm.invoke(prompt)
         return response
-    res=extract_fields(joined_text)
+    res=extract_fields(text1)
     st.subheader("✏️ Edit Extracted Fields")
 
     # Convert Pydantic object → dict
