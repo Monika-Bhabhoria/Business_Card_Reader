@@ -49,6 +49,18 @@ def save_to_file(data):
 
     updated_df.to_csv(FILE_PATH, index=False)
 
+def create_vcard(final_data):
+        vcard = f"""BEGIN:VCARD
+        VERSION:3.0
+        FN:{final_data.get('name','')}
+        ORG:{final_data.get('organisation','')}
+        TEL:{final_data.get('phone1','')}
+        EMAIL:{final_data.get('email1','')}
+        ADR:{final_data.get('address','')}
+        END:VCARD
+        """
+        return vcard
+    
 class Employee(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
@@ -143,7 +155,7 @@ if uploaded_file is not None:
     # Convert Pydantic object → dict
     data = res.dict() if res else {}
 
-
+    vcard_data=data
 
     # Initialize session state (so edits persist)
     if "form_data" not in st.session_state:
@@ -173,26 +185,29 @@ if uploaded_file is not None:
 
         if submitted:
             # Update session state
-            final_data = {
-                "name": name,
-                "designation": designation,
-                "organisation": organisation,
-                "phone1": phone1,
-                "phone2": phone2,
-                "phone3": phone3,
-                "email1": email1,
-                "email2": email2,
-                "email3": email3,
-                "address": address,
-                "Website": Website
-            }
-            try:
-                save_to_file(final_data)
-                st.success("Data Saved successfully!")
-            except Exception as e:
-                st.success("Failed to save data")
-
+            final_data = {"name": name,"designation": designation,
+                "organisation": organisation,"phone1": phone1,
+                "phone2": phone2, "phone3": phone3,
+                "email1": email1,"email2": email2,
+                "email3": email3,"address": address,
+                "Website": Website }
+            st.session_state["form_data"] = final_data
+    vcard_data = create_vcard(st.session_state["form_data"])
+    st.download_button(
+                    label="Save to Contacts",
+                    data=vcard_data,
+                    file_name="contact.vcf",
+                    mime="text/vcard"
+                )
             
+            # try:
+            #     save_to_file(final_data)
+            #     st.success("Data Saved successfully!")
+            # except Exception as e:
+            #     st.success("Failed to save data")
 
-            st.subheader("✅ Final Output")
-            st.json(final_data)
+           
+                        
+
+
+
