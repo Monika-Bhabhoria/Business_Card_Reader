@@ -13,6 +13,7 @@ import pytesseract
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 import os
+import base64
 
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -193,6 +194,11 @@ if uploaded_file is not None:
                 "Website": Website }
             st.session_state["form_data"] = final_data
     vcard_data = create_vcard(st.session_state["form_data"])
+    b64 = base64.b64encode(vcard_data.encode()).decode()
+    st.markdown(
+    f'<a href="data:text/vcard_data;base64,{b64}">Add Contact</a>',
+    unsafe_allow_html=True
+)
     st.download_button(
                     label="Save to Contacts",
                     data=vcard_data,
