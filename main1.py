@@ -15,6 +15,7 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 import os
 import base64
+from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
 from typing import Optional
@@ -88,7 +89,7 @@ llm = ChatGroq(
 )
 # reader = load_reader()
 
-st.title("📇 Business Card OCR")
+st.title("📇 Business Card Reader")
 
 uploaded_file = st.file_uploader("Upload a business card image", type=["jpg", "jpeg", "png"])
 
@@ -141,7 +142,7 @@ if uploaded_file is not None:
 
     text1 = pytesseract.image_to_string(img)
 
-    st.subheader("Extracted Text tesseract")
+    st.subheader("Extracted Raw Text")
     st.write(text1)
     def extract_fields(text):
         prompt=f"""You are a helpful business card reader.
@@ -182,17 +183,19 @@ if uploaded_file is not None:
 
             address = st.text_area("Address", st.session_state.form_data.get("address", ""))
             Website = st.text_area("Website", st.session_state.form_data.get("Website", ""))
+            remarks = st.text_area("Remarks", "")
 
-        submitted = st.form_submit_button("💾 Save")
+        submitted = st.form_submit_button("💾 Save to drive")
 
         if submitted:
             # Update session state
-            final_data = {"name": name,"designation": designation,
+            
+            final_data = {"Date":str(datetime.today().strftime("%d-%m-%Y")),"name": name,"designation": designation,
                 "organisation": organisation,"phone1": phone1,
                 "phone2": phone2, "phone3": phone3,
                 "email1": email1,"email2": email2,
                 "email3": email3,"address": address,
-                "Website": Website, "Raw_text":text1 }
+                "Website": Website, "Raw_text":text1, "Remarks": remarks }
             st.session_state["form_data"] = final_data
             try:
                 li=list(final_data.values())
