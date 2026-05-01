@@ -5,3 +5,6 @@ pytesseract==0.3.13
 langchain_groq==0.3.8
 langchain_core>=0.3.80
 pydantic>=2.7
+gspread
+oauth2client
+tesseract

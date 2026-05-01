@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import pytesseract
+import drive_methods
 
 # Cache the OCR model (important: avoids reloading every time)
 # @st.cache_resource
@@ -156,7 +157,7 @@ if uploaded_file is not None:
     # Convert Pydantic object → dict
     data = res.dict() if res else {}
 
-    vcard_data=data
+    #vcard_data=data
 
     # Initialize session state (so edits persist)
     if "form_data" not in st.session_state:
@@ -191,26 +192,32 @@ if uploaded_file is not None:
                 "phone2": phone2, "phone3": phone3,
                 "email1": email1,"email2": email2,
                 "email3": email3,"address": address,
-                "Website": Website }
+                "Website": Website, "Raw_text":text1 }
             st.session_state["form_data"] = final_data
-    vcard_data = create_vcard(st.session_state["form_data"])
-    b64 = base64.b64encode(vcard_data.encode()).decode()
-    st.markdown(
-    f'<a href="data:text/vcard_data;base64,{b64}">Add Contact</a>',
-    unsafe_allow_html=True
-)
-    st.download_button(
-                    label="Save to Contacts",
-                    data=vcard_data,
-                    file_name="contact.vcf",
-                    mime="text/vcard"
-                )
+            try:
+                li=list(final_data.values())
+                #print(li)
+                drive_methods.write_data(li)
+
+                #save_to_file(final_data)
+                st.success("Data Saved successfully!")
+            except Exception as e:
+                st.success("Failed to save data")
+                print(e)
+    # vcard_data = create_vcard(st.session_state["form_data"])
+    # b64 = base64.b64encode(vcard_data.encode()).decode()
+    # st.markdown(
+    # f'<a href="data:text/vcard_data;base64,{b64}">Add Contact</a>',
+    # unsafe_allow_html=True
+        #)
+    # st.download_button(
+    #                 label="Save to Contacts",
+    #                 data=vcard_data,
+    #                 file_name="contact.vcf",
+    #                 mime="text/vcard"
+    #             )
             
-            # try:
-            #     save_to_file(final_data)
-            #     st.success("Data Saved successfully!")
-            # except Exception as e:
-            #     st.success("Failed to save data")
+
 
            
                         
