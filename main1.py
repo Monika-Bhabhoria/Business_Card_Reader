@@ -113,8 +113,8 @@ if uploaded_file is not None:
                 "organisation": organisation,"phone1": phone1,
                 "phone2": phone2, "phone3": phone3,
                 "email1": email1,"email2": email2,
-                "email3": email3,"address": address,
-                "Website": Website, "Raw_text":text1, "Remarks": remarks }
+                "email3": email3,
+                "Website": Website, "Remarks": remarks,"address": address, "Raw_text":text1 }
             st.session_state["form_data"] = final_data
             try:
                 li=list(final_data.values())
