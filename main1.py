@@ -2,68 +2,17 @@ import streamlit as st
 import cv2
 #import easyocr
 import numpy as np
-from PIL import Image
 import pytesseract
 import drive_methods
-
-# Cache the OCR model (important: avoids reloading every time)
-# @st.cache_resource
-# def load_reader():
-#     return easyocr.Reader(['en'], gpu=True)
-
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
 import os
-import base64
 from datetime import datetime
-
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
-
-import pandas as pd
+import hashlib
 import os
 
-FILE_PATH = "cards_data.csv"
-COLUMNS = ["name","designation",
-                "organisation",
-                "phone1",
-                "phone2",
-                "phone3",
-                "email1",
-                "email2",
-                "email3",
-                "address",
-                "Website"]
-def save_to_file(data):
-    new_df = pd.DataFrame([data])
-
-    # Ensure column order
-    new_df = new_df.reindex(columns=COLUMNS)
-
-    if os.path.exists(FILE_PATH):
-        existing_df = pd.read_csv(FILE_PATH)
-
-        # Align columns if structure changed
-        existing_df = existing_df.reindex(columns=COLUMNS)
-
-        updated_df = pd.concat([existing_df, new_df], ignore_index=True)
-    else:
-        updated_df = new_df
-
-    updated_df.to_csv(FILE_PATH, index=False)
-
-def create_vcard(final_data):
-        vcard = f"""BEGIN:VCARD
-        VERSION:3.0
-        FN:{final_data.get('name','')}
-        ORG:{final_data.get('organisation','')}
-        TEL:{final_data.get('phone1','')}
-        EMAIL:{final_data.get('email1','')}
-        ADR:{final_data.get('address','')}
-        END:VCARD
-        """
-        return vcard
-    
+   
 class Employee(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
@@ -97,49 +46,17 @@ if uploaded_file is not None:
     # Read image
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
+    def resize_with_max(img, max_w=350, max_h=300):
+        h, w = img.shape[:2]
+        scale = min(max_w / w, max_h / h)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        return cv2.resize(img, (new_w, new_h))
 
+    resized_img = resize_with_max(img)
     st.subheader("Original Image")
-    st.image(img, channels="BGR")
-
-    # OCR
-    # results = reader.readtext(img)
-
-
-    # threshold = st.slider("Confidence Threshold", 0.0, 1.0, 0.3)
-
-    # annotated = img.copy()
-
-    # extracted_text = []
-
-    # for (bbox, text, score) in results:
-    #     if score > threshold:
-    #         extracted_text.append(text)
-
-    #         # Convert bbox to int
-    #         pts = np.array(bbox).astype(int)
-
-    #         # Draw bounding box
-    #         cv2.polylines(annotated, [pts], isClosed=True, color=(0,255,0), thickness=2)
-
-    #         # Put text
-    #         cv2.putText(
-    #             annotated,
-    #             text,
-    #             (pts[0][0], pts[0][1] - 5),
-    #             cv2.FONT_HERSHEY_SIMPLEX,
-    #             0.6,
-    #             (255, 0, 0),
-    #             2
-    #         )
-
-    # st.subheader("Annotated Image")
-    # st.image(annotated, channels="BGR")
-
-    # st.subheader("Extracted Text")
-    # joined_text = "\n".join(extracted_text)
-    # st.write(joined_text)
-
-
+    st.image(resized_img, channels="BGR")
+   
     text1 = pytesseract.image_to_string(img)
 
     st.subheader("Extracted Raw Text")
@@ -152,16 +69,18 @@ if uploaded_file is not None:
         structured_llm = llm.with_structured_output(Employee)
         response = structured_llm.invoke(prompt)
         return response
-    res=extract_fields(text1)
+    res = extract_fields(text1)
     st.subheader("✏️ Edit Extracted Fields")
 
     # Convert Pydantic object → dict
     data = res.dict() if res else {}
+    image_hash = hashlib.sha256(file_bytes).hexdigest()
 
-    #vcard_data=data
-
-    # Initialize session state (so edits persist)
-    if "form_data" not in st.session_state:
+    # Initialize or refresh session state when a new image is uploaded
+    if st.session_state.get("last_image_hash") != image_hash:
+        st.session_state.form_data = data
+        st.session_state.last_image_hash = image_hash
+    elif "form_data" not in st.session_state:
         st.session_state.form_data = data
 
     with st.form("edit_form"):
@@ -207,22 +126,7 @@ if uploaded_file is not None:
             except Exception as e:
                 st.success("Failed to save data")
                 print(e)
-    # vcard_data = create_vcard(st.session_state["form_data"])
-    # b64 = base64.b64encode(vcard_data.encode()).decode()
-    # st.markdown(
-    # f'<a href="data:text/vcard_data;base64,{b64}">Add Contact</a>',
-    # unsafe_allow_html=True
-        #)
-    # st.download_button(
-    #                 label="Save to Contacts",
-    #                 data=vcard_data,
-    #                 file_name="contact.vcf",
-    #                 mime="text/vcard"
-    #             )
-            
-
-
-           
+   
                         
 
 
