@@ -56,8 +56,8 @@ if uploaded_file is not None:
     resized_img = resize_with_max(img)
     st.subheader("Original Image")
     st.image(resized_img, channels="BGR")
-   
-    text1 = pytesseract.image_to_string(img)
+    with st.spinner("Extracting text from image..."):
+        text1 = pytesseract.image_to_string(img)
 
     st.subheader("Extracted Raw Text")
     st.write(text1)
@@ -80,6 +80,7 @@ if uploaded_file is not None:
     if st.session_state.get("last_image_hash") != image_hash:
         st.session_state.form_data = data
         st.session_state.last_image_hash = image_hash
+        st.session_state["remarks"] = ""
     elif "form_data" not in st.session_state:
         st.session_state.form_data = data
 
@@ -102,7 +103,7 @@ if uploaded_file is not None:
 
             address = st.text_area("Address", st.session_state.form_data.get("address", ""))
             Website = st.text_area("Website", st.session_state.form_data.get("Website", ""))
-            remarks = st.text_area("Remarks", "")
+            remarks = st.text_area("Remarks", st.session_state.form_data.get("Remarks", ""), key="remarks")
 
         submitted = st.form_submit_button("💾 Save to drive")
 
@@ -119,7 +120,8 @@ if uploaded_file is not None:
             try:
                 li=list(final_data.values())
                 #print(li)
-                drive_methods.write_data(li)
+                with st.spinner("Saving Data to file"):
+                    drive_methods.write_data(li)
 
                 #save_to_file(final_data)
                 st.success("Data Saved successfully!")
