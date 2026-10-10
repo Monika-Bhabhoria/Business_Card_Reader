@@ -65,106 +65,105 @@ if uploaded_file is not None:
 import json
 
 def extract_fields(text):
-   st.write("A: Entered extract_fields using LLM")
+    st.write("A: Entered extract_fields using LLM")
     prompt = f"""
-      You are a business card information extraction system.
-      
-      Extract only information explicitly present in the input.
-      Do not guess or invent missing values.
-      
-      Return a JSON object with exactly these fields:
-      {{
-        "name": null,
-        "designation": null,
-        "organisation": null,
-        "phone1": null,
-        "phone2": null,
-        "phone3": null,
-        "email1": null,
-        "email2": null,
-        "email3": null,
-        "address": null,
-        "Website": null
-      }}
-      
-      Use null for unavailable values.
-      Put phone numbers in separate fields, preserving their original text.
-      Put email addresses in separate fields.
-      Return JSON only, without Markdown fences.
-      
-      Input text:
-      {text}
-      """
+    You are a business card information extraction system.
+    
+    Extract only information explicitly present in the input.
+    Do not guess or invent missing values.
+    
+    Return a JSON object with exactly these fields:
+    {{
+    "name": null,
+    "designation": null,
+    "organisation": null,
+    "phone1": null,
+    "phone2": null,
+    "phone3": null,
+    "email1": null,
+    "email2": null,
+    "email3": null,
+    "address": null,
+    "Website": null
+    }}
+    
+    Use null for unavailable values.
+    Put phone numbers in separate fields, preserving their original text.
+    Put email addresses in separate fields.
+    Return JSON only, without Markdown fences.
+    
+    Input text:
+    {text}
+    """
 
     structured_llm = llm.with_structured_output(
         Employee,
         method="json_mode"
     )
-   response=structured_llm.invoke(prompt)
-   st.write("C: Groq response received")
-   return response
+    response=structured_llm.invoke(prompt)
+    st.write("C: Groq response received")
+    return response
 
-    res = extract_fields(text1)
-    st.subheader("✏️ Edit Extracted Fields")
+res = extract_fields(text1)
+st.subheader("✏️ Edit Extracted Fields")
 
-    # Convert Pydantic object → dict
-    data = res.dict() if res else {}
-    image_hash = hashlib.sha256(file_bytes).hexdigest()
+# Convert Pydantic object → dict
+data = res.dict() if res else {}
+image_hash = hashlib.sha256(file_bytes).hexdigest()
 
-    # Initialize or refresh session state when a new image is uploaded
-    if st.session_state.get("last_image_hash") != image_hash:
-        st.session_state.form_data = data
-        st.session_state.last_image_hash = image_hash
-        st.session_state["remarks"] = ""
-    elif "form_data" not in st.session_state:
-        st.session_state.form_data = data
+# Initialize or refresh session state when a new image is uploaded
+if st.session_state.get("last_image_hash") != image_hash:
+    st.session_state.form_data = data
+    st.session_state.last_image_hash = image_hash
+    st.session_state["remarks"] = ""
+elif "form_data" not in st.session_state:
+    st.session_state.form_data = data
 
-    with st.form("edit_form"):
-        col1, col2 = st.columns(2)
+with st.form("edit_form"):
+    col1, col2 = st.columns(2)
 
-        with col1:
-            name = st.text_input("Name", st.session_state.form_data.get("name", ""))
-            designation = st.text_input("Designation", st.session_state.form_data.get("designation", ""))
-            organisation = st.text_input("Organisation", st.session_state.form_data.get("organisation", ""))
+    with col1:
+        name = st.text_input("Name", st.session_state.form_data.get("name", ""))
+        designation = st.text_input("Designation", st.session_state.form_data.get("designation", ""))
+        organisation = st.text_input("Organisation", st.session_state.form_data.get("organisation", ""))
 
-            phone1 = st.text_input("Phone 1", st.session_state.form_data.get("phone1", ""))
-            phone2 = st.text_input("Phone 2", st.session_state.form_data.get("phone2", ""))
-            phone3 = st.text_input("Phone 3", st.session_state.form_data.get("phone3", ""))
+        phone1 = st.text_input("Phone 1", st.session_state.form_data.get("phone1", ""))
+        phone2 = st.text_input("Phone 2", st.session_state.form_data.get("phone2", ""))
+        phone3 = st.text_input("Phone 3", st.session_state.form_data.get("phone3", ""))
 
-        with col2:
-            email1 = st.text_input("Email 1", st.session_state.form_data.get("email1", ""))
-            email2 = st.text_input("Email 2", st.session_state.form_data.get("email2", ""))
-            email3 = st.text_input("Email 3", st.session_state.form_data.get("email3", ""))
+    with col2:
+        email1 = st.text_input("Email 1", st.session_state.form_data.get("email1", ""))
+        email2 = st.text_input("Email 2", st.session_state.form_data.get("email2", ""))
+        email3 = st.text_input("Email 3", st.session_state.form_data.get("email3", ""))
 
-            address = st.text_area("Address", st.session_state.form_data.get("address", ""))
-            Website = st.text_area("Website", st.session_state.form_data.get("Website", ""))
-            remarks = st.text_area("Remarks", st.session_state.form_data.get("Remarks", ""), key="remarks")
+        address = st.text_area("Address", st.session_state.form_data.get("address", ""))
+        Website = st.text_area("Website", st.session_state.form_data.get("Website", ""))
+        remarks = st.text_area("Remarks", st.session_state.form_data.get("Remarks", ""), key="remarks")
 
-        submitted = st.form_submit_button("💾 Save to drive")
+    submitted = st.form_submit_button("💾 Save to drive")
 
-        if submitted:
-            # Update session state
-            
-            final_data = {"Date":str(datetime.today().strftime("%d-%m-%Y")),"name": name,"designation": designation,
-                "organisation": organisation,"phone1": phone1,
-                "phone2": phone2, "phone3": phone3,
-                "email1": email1,"email2": email2,
-                "email3": email3,
-                "Website": Website, "Remarks": remarks,"address": address, "Raw_text":text1 }
-            st.session_state["form_data"] = final_data
-            try:
-                li=list(final_data.values())
-                #print(li)
-                with st.spinner("Saving Data to file"):
-                    drive_methods.write_data(li)
+    if submitted:
+        # Update session state
+        
+        final_data = {"Date":str(datetime.today().strftime("%d-%m-%Y")),"name": name,"designation": designation,
+            "organisation": organisation,"phone1": phone1,
+            "phone2": phone2, "phone3": phone3,
+            "email1": email1,"email2": email2,
+            "email3": email3,
+            "Website": Website, "Remarks": remarks,"address": address, "Raw_text":text1 }
+        st.session_state["form_data"] = final_data
+        try:
+            li=list(final_data.values())
+            #print(li)
+            with st.spinner("Saving Data to file"):
+                drive_methods.write_data(li)
 
-                #save_to_file(final_data)
-                st.success("Data Saved successfully!")
-            except Exception as e:
-                st.success("Failed to save data")
-                print(e)
-   
-                        
+            #save_to_file(final_data)
+            st.success("Data Saved successfully!")
+        except Exception as e:
+            st.success("Failed to save data")
+            print(e)
 
+                    
 
 
