@@ -65,6 +65,7 @@ if uploaded_file is not None:
 import json
 
 def extract_fields(text):
+   st.write("A: Entered extract_fields using LLM")
     prompt = f"""
       You are a business card information extraction system.
       
@@ -99,8 +100,9 @@ def extract_fields(text):
         Employee,
         method="json_mode"
     )
-
-    return structured_llm.invoke(prompt)
+   response=structured_llm.invoke(prompt)
+   st.write("C: Groq response received")
+   return response
 
     res = extract_fields(text1)
     st.subheader("✏️ Edit Extracted Fields")
