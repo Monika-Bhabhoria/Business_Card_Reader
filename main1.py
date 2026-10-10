@@ -61,7 +61,48 @@ if uploaded_file is not None:
 
     st.subheader("Extracted Raw Text")
     st.write(text1)
-    def extract_fields(text):
+   
+import json
+
+def extract_fields(text):
+    prompt = f"""
+You are a business card information extraction system.
+
+Extract only information explicitly present in the input.
+Do not guess or invent missing values.
+
+Return a JSON object with exactly these fields:
+{{
+  "name": null,
+  "designation": null,
+  "organisation": null,
+  "phone1": null,
+  "phone2": null,
+  "phone3": null,
+  "email1": null,
+  "email2": null,
+  "email3": null,
+  "address": null,
+  "Website": null
+}}
+
+Use null for unavailable values.
+Put phone numbers in separate fields, preserving their original text.
+Put email addresses in separate fields.
+Return JSON only, without Markdown fences.
+
+Input text:
+{text}
+"""
+
+    structured_llm = llm.with_structured_output(
+        Employee,
+        method="json_mode"
+    )
+
+    return structured_llm.invoke(prompt)
+
+    def extract_fields_bk(text):
         prompt=f"""You are a helpful business card reader.
         Your job is to classify the content from business card into fields like Employee_Name, organisation_name, phone_number, Adress, website.
         If a value is not available, set it to none. DO NOT ASSUME values, ONLY USE information from given input.
