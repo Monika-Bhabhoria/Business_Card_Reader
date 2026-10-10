@@ -39,7 +39,7 @@ llm = ChatGroq(
 # reader = load_reader()
 
 st.title("📇 Business Card Reader")
-
+text1=""
 uploaded_file = st.file_uploader("Upload a business card image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
